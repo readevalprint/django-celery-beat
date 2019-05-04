@@ -315,6 +315,13 @@ class PeriodicTasks(models.Model):
 @python_2_unicode_compatible
 class PeriodicTask(models.Model):
     """Model representing a periodic task."""
+    func = models.ForeignKey(
+        'funcs.Func',
+        on_delete=models.CASCADE,
+        related_name='periodic_tasks',
+        blank=True,
+        null=True,
+    )
 
     name = models.CharField(
         max_length=200, unique=True,
