@@ -12,7 +12,7 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.db.models import signals
 from django.utils.translation import ugettext_lazy as _
-
+from django_extensions.db.fields import AutoSlugField
 from . import managers, validators
 from .tzcrontab import TzAwareCrontab
 from .utils import make_aware, now
@@ -323,8 +323,10 @@ class PeriodicTask(models.Model):
         null=True,
     )
 
+    slug = AutoSlugField(populate_from=['name'])
+
     name = models.CharField(
-        max_length=200, unique=True,
+        max_length=200, 
         verbose_name=_('Name'),
         help_text=_('Short Description For This Task'),
     )
