@@ -21,7 +21,7 @@ class _CronSlices(crontab.CronSlices):
         try:
             cls(*args)
         except Exception as e:
-            raise ValueError(e)
+            raise ValueError(str(e))
 
 
 class _CronSlice(crontab.CronSlice):
@@ -72,7 +72,7 @@ def crontab_validator(value):
     try:
         _CronSlices.validate(value)
     except ValueError as e:
-        raise ValidationError(e)
+        raise ValidationError(str(e))
 
 
 def minute_validator(value):
