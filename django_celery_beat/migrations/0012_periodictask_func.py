@@ -7,7 +7,7 @@ import django.db.models.deletion
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('funcs', '0017_auto_20190428_0711'),
+        ('funcs', '0001_initial.py'),
         ('django_celery_beat', '0011_fix_migration_history'),
     ]
 
