@@ -4,7 +4,7 @@
 
 |build-status| |coverage| |license| |wheel| |pyversion| |pyimp|
 
-:Version: 1.4.0
+:Version: 1.5.0
 :Web: http://django-celery-beat.readthedocs.io/
 :Download: http://pypi.python.org/pypi/django-celery-beat
 :Source: http://github.com/celery/django-celery-beat
@@ -159,7 +159,7 @@ Example creating crontab-based periodic task
 --------------------------------------------
 
 A crontab schedule has the fields: ``minute``, ``hour``, ``day_of_week``,
-``day_of_month`` and ``month_of_year`, so if you want the equivalent
+``day_of_month`` and ``month_of_year``, so if you want the equivalent
 of a ``30 * * * *`` (execute every 30 minutes) crontab entry you specify::
 
     >>> from django_celery_beat.models import CrontabSchedule, PeriodicTask
@@ -215,13 +215,12 @@ Both the worker and beat services need to be running at the same time.
         $ celery -A [project-name] beat -l info --scheduler django_celery_beat.schedulers:DatabaseScheduler
 
 
-  **OR** you can use the -S (scheduler flag), for more options see ``celery beat --help ``)::
+   **OR** you can use the -S (scheduler flag), for more options see ``celery beat --help``)::
 
             $ celery -A [project-name] beat -l info -S django
 
-
-Also, as an alternative, you can run the two steps above (worker and beat services)
-with only one command (recommended for **development environment only**)::
+   Also, as an alternative, you can run the two steps above (worker and beat services)
+   with only one command (recommended for **development environment only**)::
 
 
     $ celery -A [project-name] worker --beat --scheduler django --loglevel=info
@@ -238,7 +237,7 @@ Installation
 You can install django-celery-beat either via the Python Package Index (PyPI)
 or from source.
 
-To install using `pip`,::
+To install using ``pip``::
 
     $ pip install -U django-celery-beat
 
@@ -258,6 +257,21 @@ You can install it by doing the following,::
 The last command must be executed as a privileged user if
 you are not currently using a virtualenv.
 
+
+After installation, add `django_celery_beat` to Django settings file and migrate.
+
+settings.py
+```
+INSTALLED_APPS = [
+    ...,
+    'django_celery_beat',
+]
+```
+
+```
+python manage.py migrate django_celery_beat
+```
+
 Using the development version
 -----------------------------
 
@@ -270,10 +284,20 @@ pip command::
     $ pip install https://github.com/celery/django-celery-beat/zipball/master#egg=django-celery-beat
 
 
+Developing django-celery-beat
+-----------------------------
+
+To spin up a local development copy of django-celery-beat with Django admin at http://127.0.0.1:58000/admin/ run::
+
+    $ docker-compose up --build
+
+Log-in as user ``admin`` with password ``admin``.
+
+
 TZ Awareness:
 -------------
 
-If you have a project that is time zone naive, you can set `DJANGO_CELERY_BEAT_TZ_AWARE=False` in your settings file.
+If you have a project that is time zone naive, you can set ``DJANGO_CELERY_BEAT_TZ_AWARE=False`` in your settings file.
 
 
 .. |build-status| image:: https://secure.travis-ci.org/celery/django-celery-beat.svg?branch=master

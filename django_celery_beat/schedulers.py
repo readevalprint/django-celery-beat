@@ -24,9 +24,10 @@ from django.core.exceptions import ObjectDoesNotExist
 from .models import (
     PeriodicTask, PeriodicTasks,
     CrontabSchedule, IntervalSchedule,
-    SolarSchedule,
+    SolarSchedule, ClockedSchedule
 )
 from .utils import make_aware
+from .clockedschedule import clocked
 
 try:
     from celery.utils.time import is_naive
@@ -53,6 +54,7 @@ class ModelEntry(ScheduleEntry):
         (schedules.crontab, CrontabSchedule, 'crontab'),
         (schedules.schedule, IntervalSchedule, 'interval'),
         (schedules.solar, SolarSchedule, 'solar'),
+        (clocked, ClockedSchedule, 'clocked')
     )
     save_fields = ['last_run_at', 'total_run_count', 'no_changes']
 
@@ -80,12 +82,15 @@ class ModelEntry(ScheduleEntry):
             self._disable(model)
 
         self.options = {}
-        for option in ['queue', 'exchange', 'routing_key', 'expires',
-                       'priority']:
+        for option in ['queue', 'exchange', 'routing_key', 'priority']:
             value = getattr(model, option)
             if value is None:
                 continue
             self.options[option] = value
+
+        if getattr(model, 'expires_', None):
+            self.options['expires'] = getattr(model, 'expires_')
+
         self.options['headers'] = loads(model.headers or '{}')
 
         self.total_run_count = model.total_run_count
@@ -193,13 +198,15 @@ class ModelEntry(ScheduleEntry):
 
     @classmethod
     def _unpack_options(cls, queue=None, exchange=None, routing_key=None,
-                        priority=None, headers=None, **kwargs):
+                        priority=None, headers=None, expire_seconds=None,
+                        **kwargs):
         return {
             'queue': queue,
             'exchange': exchange,
             'routing_key': routing_key,
             'priority': priority,
             'headers': dumps(headers or {}),
+            'expire_seconds': expire_seconds,
         }
 
     def __repr__(self):
@@ -319,7 +326,7 @@ class DatabaseScheduler(Scheduler):
                     s[name] = entry
 
             except Exception as exc:
-                logger.error(ADD_ENTRY_ERROR, name, exc, entry_fields)
+                logger.exception(ADD_ENTRY_ERROR, name, exc, entry_fields)
         self.schedule.update(s)
 
     def install_default_entries(self, data):
@@ -329,7 +336,7 @@ class DatabaseScheduler(Scheduler):
                 'celery.backend_cleanup', {
                     'task': 'celery.backend_cleanup',
                     'schedule': schedules.crontab('0', '4', '*'),
-                    'options': {'expires': 12 * 3600},
+                    'options': {'expire_seconds': 12 * 3600},
                 },
             )
         self.update_from_dict(entries)

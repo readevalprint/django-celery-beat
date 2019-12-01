@@ -5,18 +5,30 @@ from django.test import TestCase
 
 from django_celery_beat.admin import PeriodicTaskAdmin
 from django_celery_beat.models import \
+    DAYS, \
     PeriodicTask, \
     CrontabSchedule, \
     IntervalSchedule, \
-    SolarSchedule
+    SolarSchedule, \
+    ClockedSchedule
 from django.core.exceptions import ValidationError
 
 
 class ActionsTests(TestCase):
+
+    @classmethod
+    def setUpTestData(cls):
+        super(ActionsTests, cls).setUpTestData()
+        cls.interval_schedule = IntervalSchedule.objects.create(every=10,
+                                                                period=DAYS)
+
     def test_toggle_action(self):
-        PeriodicTask.objects.create(name='name1', task='task1', enabled=False)
-        PeriodicTask.objects.create(name='name2', task='task2', enabled=True)
-        PeriodicTask.objects.create(name='name3', task='task3', enabled=False)
+        PeriodicTask.objects.create(name='name1', task='task1', enabled=False,
+                                    interval=self.interval_schedule)
+        PeriodicTask.objects.create(name='name2', task='task2', enabled=True,
+                                    interval=self.interval_schedule)
+        PeriodicTask.objects.create(name='name3', task='task3', enabled=False,
+                                    interval=self.interval_schedule)
 
         qs = PeriodicTask.objects.all()
         PeriodicTaskAdmin(PeriodicTask, None)._toggle_tasks_activity(qs)
@@ -29,9 +41,12 @@ class ActionsTests(TestCase):
         self.assertTrue(e3)
 
     def test_toggle_action_all_enabled(self):
-        PeriodicTask.objects.create(name='name1', task='task1', enabled=True)
-        PeriodicTask.objects.create(name='name2', task='task2', enabled=True)
-        PeriodicTask.objects.create(name='name3', task='task3', enabled=True)
+        PeriodicTask.objects.create(name='name1', task='task1', enabled=True,
+                                    interval=self.interval_schedule)
+        PeriodicTask.objects.create(name='name2', task='task2', enabled=True,
+                                    interval=self.interval_schedule)
+        PeriodicTask.objects.create(name='name3', task='task3', enabled=True,
+                                    interval=self.interval_schedule)
 
         qs = PeriodicTask.objects.all()
         PeriodicTaskAdmin(PeriodicTask, None)._toggle_tasks_activity(qs)
@@ -44,9 +59,13 @@ class ActionsTests(TestCase):
         self.assertFalse(e3)
 
     def test_toggle_action_all_disabled(self):
-        PeriodicTask.objects.create(name='name1', task='task1', enabled=False)
-        PeriodicTask.objects.create(name='name2', task='task2', enabled=False)
-        PeriodicTask.objects.create(name='name3', task='task3', enabled=False)
+
+        PeriodicTask.objects.create(name='name1', task='task1', enabled=False,
+                                    interval=self.interval_schedule)
+        PeriodicTask.objects.create(name='name2', task='task2', enabled=False,
+                                    interval=self.interval_schedule)
+        PeriodicTask.objects.create(name='name3', task='task3', enabled=False,
+                                    interval=self.interval_schedule)
 
         qs = PeriodicTask.objects.all()
         PeriodicTaskAdmin(PeriodicTask, None)._toggle_tasks_activity(qs)
@@ -62,17 +81,19 @@ class ActionsTests(TestCase):
         with self.assertRaises(ValidationError):
             PeriodicTask().validate_unique()
 
-    def test_validate_unique_raises_for_multiple_schedules(self):
+    def test_save_raises_for_multiple_schedules(self):
         schedules = [
             ('crontab', CrontabSchedule()),
             ('interval', IntervalSchedule()),
             ('solar', SolarSchedule()),
+            ('clocked', ClockedSchedule())
         ]
-        for options in combinations(schedules, 2):
+        for i, options in enumerate(combinations(schedules, 2)):
             with self.assertRaises(ValidationError):
-                PeriodicTask(**dict(options)).validate_unique()
+                PeriodicTask(name='task{}'.format(i), **dict(options)).save()
 
     def test_validate_unique_not_raises(self):
         PeriodicTask(crontab=CrontabSchedule()).validate_unique()
         PeriodicTask(interval=IntervalSchedule()).validate_unique()
         PeriodicTask(solar=SolarSchedule()).validate_unique()
+        PeriodicTask(clocked=ClockedSchedule(), one_off=True).validate_unique()
