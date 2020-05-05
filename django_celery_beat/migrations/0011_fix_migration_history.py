@@ -16,16 +16,16 @@ class Migration(migrations.Migration):
         # were deleted, so we must also delete them from the history.
         # this is necessary because the squashed file was somehow screwing up
         # this history for version 1.3.0 installs that were upgraded.
-        migrations.RunSQL([(
-            """
-            delete from django_migrations where app='django_celery_beat' and (
-            name = '0005_add_solarschedule_events_choices'
-            or name = '0006_auto_20180210_1226'
-            or name = '0006_auto_20180322_0932'
-            or name = '0007_auto_20180521_0826'
-            or name = '0008_auto_20180914_1922'
-            )
-            """, None)],
-            reverse_sql=migrations.RunSQL.noop
-        ),
+        #migrations.RunSQL([(
+        #    """
+        #    delete from django_migrations where app='django_celery_beat' and (
+        #    name = '0005_add_solarschedule_events_choices'
+        #    or name = '0006_auto_20180210_1226'
+        #    or name = '0006_auto_20180322_0932'
+        #    or name = '0007_auto_20180521_0826'
+        #    or name = '0008_auto_20180914_1922'
+        #    )
+        #    """, None)],
+        #    reverse_sql=migrations.RunSQL.noop
+        #),
     ]
